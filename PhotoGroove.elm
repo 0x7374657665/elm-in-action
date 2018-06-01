@@ -1,19 +1,46 @@
 module PhotoGroove exposing (..)
 
-import Html exposing (div, h1, img, text)
+import Array exposing (Array)
+import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onClick)
 
 
+urlPrefix : String
 urlPrefix =
     "http://elm-in-action.com/"
 
 
+type ThumbnailSize
+    = Small
+    | Medium
+    | Large
+
+
+type alias Photo =
+    { url : String }
+
+
+type alias Model =
+    { photos : List Photo, selectedUrl : String, chosenSize : ThumbnailSize }
+
+
+type alias Msg =
+    { operation : String, data : String }
+
+
+view : Model -> Html Msg
 view model =
     div [ class "content" ]
         [ h1 [] [ text "Photo Groove" ]
+        , button
+            [ onClick { operation = "SURPRISE_ME", data = "" } ]
+            [ text "Surprise Me!" ]
+        , h3 [] [ text "Thumbnail Size:" ]
+        , div [ id "choose-size" ]
+            (List.map viewSizeChooser [ Small, Medium, Large ])
         , div
-            [ id "thumbnails" ]
+            [ id "thumbnails", class (sizeToString model.chosenSize) ]
             (List.map
                 (viewThumbnail model.selectedUrl)
                 model.photos
@@ -26,6 +53,7 @@ view model =
         ]
 
 
+viewThumbnail : String -> Photo -> Html Msg
 viewThumbnail selectedUrl thumbnail =
     img
         [ src (urlPrefix ++ thumbnail.url)
@@ -35,6 +63,28 @@ viewThumbnail selectedUrl thumbnail =
         []
 
 
+viewSizeChooser : ThumbnailSize -> Html Msg
+viewSizeChooser size =
+    label []
+        [ input [ type_ "radio", name "size" ] []
+        , text (sizeToString size)
+        ]
+
+
+sizeToString : ThumbnailSize -> String
+sizeToString size =
+    case size of
+        Small ->
+            "small"
+
+        Medium ->
+            "medium"
+
+        Large ->
+            "large"
+
+
+initialModel : Model
 initialModel =
     { photos =
         [ { url = "1.jpeg" }
@@ -42,14 +92,26 @@ initialModel =
         , { url = "3.jpeg" }
         ]
     , selectedUrl = "1.jpeg"
+    , chosenSize = Large
     }
 
 
+photoArray : Array Photo
+photoArray =
+    Array.fromList initialModel.photos
+
+
+update : Msg -> Model -> Model
 update msg model =
-    if msg.operation == "SELECT_PHOTO" then
-        { model | selectedUrl = msg.data }
-    else
-        model
+    case msg.operation of
+        "SELECT_PHOTO" ->
+            { model | selectedUrl = msg.data }
+
+        "SURPRISE_ME" ->
+            { model | selectedUrl = "2.jpeg" }
+
+        _ ->
+            model
 
 
 main =
